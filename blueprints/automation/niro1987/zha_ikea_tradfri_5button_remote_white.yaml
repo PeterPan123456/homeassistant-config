@@ -1,24 +1,13 @@
----
 # This automation simulates the use of the IKEA TRADFRI Remote control
-# connected through ZHA.
-
-# | Button   | Action               |
-# | -------- | -------------------- |
-# | Power    | Toggle the light     |
-# | Dim-Up   | Increase brightness  |
-# | Dim-Down | Decrease brightness  |
-# | Right    | Increase temperature |
-# | Left     | Decrease temperature |
+# connected through ZHA, with added functionality to switch a power socket
+# by holding down the middle (power) button.
 
 blueprint:
   source_url: https://github.com/niro1987/homeassistant-config/blob/main/blueprints/automation/niro1987/zha_ikea_tradfri_5button_remote_white.yaml
-
-  name: ZHA - IKEA TRADFRI - 5 Button Remote - Warm White Lights
-
+  name: ZHA - IKEA TRADFRI - 5 Button Remote - Warm White Lights and Power Socket Control
   description: >-
     This automation simulates the use of the IKEA TRADFRI remote control
-    connected through ZHA.
-
+    connected through ZHA. Holding down the middle button switches the state of a selected remote power socket.
   domain: automation
 
   input:
@@ -27,17 +16,21 @@ blueprint:
       description: Select the remote control you wish to use.
       selector:
         device:
-          filter:
-            - integration: zha
-              manufacturer: IKEA of Sweden
-              model: TRADFRI remote control
+          integration: zha
+          manufacturer: IKEA of Sweden
+          model: TRADFRI remote control
     light:
       name: Light
       description: Select the light entity you wish to control.
       selector:
         entity:
-          filter:
-            - domain: light
+          domain: light
+    power_socket:
+      name: Power Socket
+      description: Select the remote power socket you wish to switch.
+      selector:
+        entity:
+          domain: switch  # Assuming the power socket is a switch entity
     speed:
       name: Speed
       description: The speed in which to update the light when the button is held.
@@ -56,6 +49,7 @@ max_exceeded: silent
 variables:
   var_light: !input light
   var_speed: !input speed
+  var_power_socket: !input power_socket
 
 trigger:
   - platform: event
@@ -74,17 +68,14 @@ action:
             target:
               entity_id: !input light
 
-      # Long-Press on the power button.
+      # Long-Press on the power button to switch the power socket state.
       - conditions:
           - condition: template
             value_template: '{{ trigger.event.data.command == "move_to_level_with_on_off" }}'
         sequence:
-          - service: light.turn_on
+          - service: homeassistant.toggle
             target:
-              entity_id: !input light
-            data:
-              brightness: 254
-              color_temp: 400
+              entity_id: !input power_socket
 
       # Short-Press on the dim-up button.
       - conditions:
@@ -157,7 +148,7 @@ action:
             data:
               color_temp: >-
                 {% if state_attr(var_light, "color_temp") - 18 < 153 %}
-                  {{ 153 }}
+                  153
                 {% else %}
                   {{ state_attr(var_light, "color_temp") - 18 }}
                 {% endif %}
@@ -179,7 +170,7 @@ action:
                   data:
                     color_temp: >-
                       {% if state_attr(var_light, "color_temp") - 18 < 153 %}
-                        {{ 153 }}
+                        153
                       {% else %}
                         {{ state_attr(var_light, "color_temp") - 18 }}
                       {% endif %}
@@ -200,11 +191,12 @@ action:
             data:
               color_temp: >-
                 {% if state_attr(var_light, "color_temp") + 18 > 500 %}
-                  {{ 500 }}
+                  500
                 {% else %}
                   {{ state_attr(var_light, "color_temp") + 18 }}
                 {% endif %}
               transition: "{{ (var_speed / 1000)|float }}"
+
 
       # Long-Press on the color-down button.
       - conditions:
