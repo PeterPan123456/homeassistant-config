@@ -4,6 +4,7 @@
 
 blueprint:
   source_url: https://github.com/PeterPan123456/homeassistant-config/blob/main/blueprints/automation/niro1987/zha_ikea_tradfri_5button_remote_white.yaml  name: ZHA - IKEA TRADFRI - 5 Button Remote - Warm White Lights and Power Socket Control
+  name: ZHA - IKEA TRADFRI - 5 Button Remote + switch - Warm White Lights
   description: >-
     This automation simulates the use of the IKEA TRADFRI remote control
     connected through ZHA. Holding down the middle button switches the state of a selected remote power socket.
